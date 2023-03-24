@@ -1,0 +1,20 @@
+---
+
+- block:
+    - when: adguard_home_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
+
+    - when: adguard_home_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
+  tags:
+    - setup-all
+    - setup-adguard-home
+    - install-all
+    - install-adguard-home
+
+- block:
+    - when: not adguard_home_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
+  tags:
+    - setup-all
+    - setup-adguard-home

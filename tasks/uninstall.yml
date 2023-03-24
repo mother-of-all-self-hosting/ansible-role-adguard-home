@@ -1,0 +1,25 @@
+---
+
+- name: Check existence of AdGuard Home systemd service
+  ansible.builtin.stat:
+    path: "{{ devture_systemd_docker_base_systemd_path }}/{{ adguard_home_identifier }}.service"
+  register: adguard_home_service_stat
+
+- when: adguard_home_service_stat.stat.exists | bool
+  block:
+    - name: Ensure AdGuard Home systemd service is stopped
+      ansible.builtin.service:
+        name: "{{ adguard_home_identifier }}"
+        state: stopped
+        enabled: false
+        daemon_reload: true
+
+    - name: Ensure AdGuard Home systemd service does not exist
+      ansible.builtin.file:
+        path: "{{ devture_systemd_docker_base_systemd_path }}/{{ adguard_home_identifier }}.service"
+        state: absent
+
+    - name: Ensure AdGuard Home path doesn't exist
+      ansible.builtin.file:
+        path: "{{ adguard_home_base_path }}"
+        state: absent

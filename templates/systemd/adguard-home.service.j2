@@ -1,0 +1,59 @@
+#jinja2: lstrip_blocks: "True"
+[Unit]
+Description=AdGuard Home ({{ adguard_home_identifier }})
+{% for service in adguard_home_systemd_required_services_list %}
+Requires={{ service }}
+After={{ service }}
+{% endfor %}
+DefaultDependencies=no
+
+[Service]
+Type=simple
+Environment="HOME={{ devture_systemd_docker_base_systemd_unit_home_path }}"
+ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} kill {{ adguard_home_identifier }} 2>/dev/null || true'
+ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ adguard_home_identifier }} 2>/dev/null || true'
+
+ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
+			--rm \
+			--name={{ adguard_home_identifier }} \
+			--log-driver=none \
+			--user={{ adguard_home_uid }}:{{ adguard_home_gid }} \
+			--cap-drop=ALL \
+			--cap-add=NET_BIND_SERVICE \
+			--cap-add=DAC_OVERRIDE \
+			--read-only \
+			--network={{ adguard_home_container_network }} \
+			--hostname={{ adguard_home_container_hostname }} \
+			{% if adguard_home_container_dns_tcp_bind_port %}
+			-p {{ adguard_home_container_dns_tcp_bind_port }}:53/tcp \
+			{% endif %}
+			{% if adguard_home_container_dns_udp_bind_port %}
+			-p {{ adguard_home_container_dns_udp_bind_port }}:53/udp \
+			{% endif %}
+			--env-file={{ adguard_home_base_path }}/env \
+			--label-file={{ adguard_home_base_path }}/labels \
+			--mount type=bind,src={{ adguard_home_config_path }},dst=/opt/adguardhome/conf \
+			--mount type=bind,src={{ adguard_home_workdir_path }},dst=/opt/adguardhome/work \
+			{% for volume in adguard_home_container_additional_volumes %}
+			--mount type={{ volume.type | default('bind' if '/' in volume.src else 'volume') }},src={{ volume.src }},dst={{ volume.dst }}{{ (',' + volume.options) if volume.options else '' }} \
+			{% endfor %}
+			{% for arg in adguard_home_container_extra_arguments %}
+			{{ arg }} \
+			{% endfor %}
+			{{ adguard_home_container_image }}
+
+{% for network in adguard_home_container_additional_networks %}
+ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} network connect {{ network }} {{ adguard_home_identifier }}
+{% endfor %}
+
+ExecStart={{ devture_systemd_docker_base_host_command_docker }} start --attach {{ adguard_home_identifier }}
+
+ExecStop=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} kill {{ adguard_home_identifier }} 2>/dev/null || true'
+ExecStop=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ adguard_home_identifier }} 2>/dev/null || true'
+
+Restart=always
+RestartSec=30
+SyslogIdentifier={{ adguard_home_identifier }}
+
+[Install]
+WantedBy=multi-user.target
