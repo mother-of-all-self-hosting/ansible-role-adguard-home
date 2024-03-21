@@ -32,3 +32,12 @@
         msg: >-
           adguard_home_container_labels_traefik_path_prefix (`{{ adguard_home_container_labels_traefik_path_prefix }}`) must either be `/` or not end with a slash (e.g. `/adguard-home`).
       when: "adguard_home_container_labels_traefik_path_prefix != '/' and adguard_home_container_labels_traefik_path_prefix[-1] == '/'"
+
+- when: adguard_home_container_network_ipv6_enabled | bool
+  block:
+    - name: Fail if IPv6 is enabled but not subnet is provided
+      ansible.builtin.fail:
+        msg: >-
+          You need to specify an IPv6 subnet when IPv6 is enabled (adguard_home_container_network_ipv6_subnet).
+      when: "adguard_home_container_network_ipv6_subnet == ''"
+

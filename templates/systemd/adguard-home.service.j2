@@ -30,6 +30,12 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
 			{% if adguard_home_container_dns_udp_bind_port %}
 			-p {{ adguard_home_container_dns_udp_bind_port }}:53/udp \
 			{% endif %}
+			{% if adguard_home_container_dns_tcp6_bind_address %}
+			-p {{ adguard_home_container_dns_tcp6_bind_address }}:53/tcp \
+			{% endif %}
+			{% if adguard_home_container_dns_udp6_bind_address %}
+			-p {{ adguard_home_container_dns_udp6_bind_address }}:53/udp \
+			{% endif %}
 			--env-file={{ adguard_home_base_path }}/env \
 			--label-file={{ adguard_home_base_path }}/labels \
 			--mount type=bind,src={{ adguard_home_config_path }},dst=/opt/adguardhome/conf \
