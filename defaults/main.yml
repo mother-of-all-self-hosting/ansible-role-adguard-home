@@ -30,6 +30,11 @@ adguard_home_container_image_force_pull: "{{ adguard_home_container_image.endswi
 # The base container network. It will be auto-created by this role if it doesn't exist already.
 adguard_home_container_network: "{{ adguard_home_identifier }}"
 
+# Whether to enable IPv6 on the container network.
+adguard_home_container_network_ipv6_enabled: false
+# If IPv6 is enabled, define what subnet should be used inside the network.
+adguard_home_container_network_ipv6_subnet: ""
+
 # A list of additional container networks that the container would be connected to.
 # The role does not create these networks, so make sure they already exist.
 # Use this to expose this container to another reverse proxy, which runs in a different container network.
@@ -44,6 +49,19 @@ adguard_home_container_dns_tcp_bind_port: '53'
 #
 # Takes an "<ip>:<port>" value (e.g. "127.0.0.1:53"), just a port number or an empty string to not expose.
 adguard_home_container_dns_udp_bind_port: "{{ adguard_home_container_dns_tcp_bind_port }}"
+
+# Specified if the container should bind to IPv6 TCP/UDP addresses as
+# well.
+#
+# If you specify adguard_home_container_dns_{tcp,udp}_bind_port as
+# only a port number, then you don't need to change these variables.
+# However, if you define a specific "<IPv4>:<port>" combination on
+# adguard_home_container_dns_tcp_bind_port, then you might want to
+# also set these variables to listen on "<IPv6>:<port>".
+#
+# When specifying an IPv6, please use the "[IP]:PORT" notation.
+adguard_home_container_dns_tcp6_bind_address: ''
+adguard_home_container_dns_udp6_bind_address: ''
 
 # adguard_home_container_labels_traefik_enabled controls whether labels to assist a Traefik reverse-proxy will be attached to the container.
 # See `../templates/labels.j2` for details.

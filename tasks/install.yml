@@ -38,6 +38,9 @@
   community.general.docker_network:
     name: "{{ adguard_home_container_network }}"
     driver: bridge
+    enable_ipv6: "{{ 'yes' if adguard_home_container_network_ipv6_enabled else 'no' }}"
+    ipam_config:
+      - subnet: "{{ adguard_home_container_network_ipv6_subnet if adguard_home_container_network_ipv6_enabled else omit }}"
 
 - name: Ensure AdGuard Home systemd service is present
   ansible.builtin.template:
