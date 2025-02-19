@@ -33,7 +33,9 @@ adguard_home_container_network: "{{ adguard_home_identifier }}"
 # A list of additional container networks that the container would be connected to.
 # The role does not create these networks, so make sure they already exist.
 # Use this to expose this container to another reverse proxy, which runs in a different container network.
-adguard_home_container_additional_networks: []
+adguard_home_container_additional_networks: "{{ adguard_home_container_additional_networks_auto + adguard_home_container_additional_networks_custom }}"
+adguard_home_container_additional_networks_auto: []
+adguard_home_container_additional_networks_custom: []
 
 # Specifies how the container publishes its TCP DNS port
 #
