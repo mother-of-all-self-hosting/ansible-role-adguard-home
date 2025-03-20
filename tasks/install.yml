@@ -2,7 +2,7 @@
 
 - name: Ensure AdGuard Home paths exist
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ item.path }}"
     state: directory
     owner: "{{ adguard_home_uid }}"
     group: "{{ adguard_home_gid }}"
