@@ -23,7 +23,9 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
 			--cap-add=DAC_OVERRIDE \
 			--read-only \
 			--network={{ adguard_home_container_network }} \
+			{% if adguard_home_container_hostname %}
 			--hostname={{ adguard_home_container_hostname }} \
+			{% endif %}
 			{% if adguard_home_container_dns_tcp_bind_port %}
 			-p {{ adguard_home_container_dns_tcp_bind_port }}:53/tcp \
 			{% endif %}
