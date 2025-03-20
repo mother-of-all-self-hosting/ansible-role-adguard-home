@@ -4,13 +4,18 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    mode: 0750
     owner: "{{ adguard_home_uid }}"
     group: "{{ adguard_home_gid }}"
+    mode: "{{ item.mode }}"
   with_items:
-    - "{{ adguard_home_base_path }}"
-    - "{{ adguard_home_config_path }}"
-    - "{{ adguard_home_workdir_path }}"
+    - path: "{{ adguard_home_base_path }}"
+      mode: "0750"
+    - path: "{{ adguard_home_config_path }}"
+      mode: "0750"
+    # Using `0700` here to avoid AdGuard Home complaining:
+    # > permcheck: warning: found unexpected permissions type=directory path=/opt/adguardhome/work perm=0750 want=0700
+    - path: "{{ adguard_home_workdir_path }}"
+      mode: "0700"
 
 - name: Ensure AdGuard Home support files installed
   ansible.builtin.template:
