@@ -47,6 +47,32 @@ adguard_home_container_dns_tcp_bind_port: '53'
 # Takes an "<ip>:<port>" value (e.g. "127.0.0.1:53"), just a port number or an empty string to not expose.
 adguard_home_container_dns_udp_bind_port: "{{ adguard_home_container_dns_tcp_bind_port }}"
 
+# Specifies the maximum size of the socket receive buffer (`net.core.rmem_max`) kernel parameter on the host (which will cascade into the container) to at least this value.
+# If the host uses a larger value, this will be ignored.
+#
+# We intentionally increase these buffers to 7.5MB, to make QUIC-Go happy.
+# See: https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes
+# Otherwise, it may report:
+# > failed to sufficiently increase receive buffer size (was: 208 kiB, wanted: 7168 kiB, got: 416 kiB). See https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes for details.
+# .. when `h3://` DNS servers are used.
+#
+# The reason we apply this at the host level, not via `docker run --sysctl` is that
+# the `docker run --sysctl` option doesn't seem to work here (likely because it's Alpine in the container or something):
+# > Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: open /proc/sys/net/core/rmem_max: permission denied
+# This same error is produced even if the container is started as root, with all capabilities, and `--privileged`, etc.
+#
+# If this is blank, no sysctl changes will be made.
+adguard_home_host_sysctl_minimum_net_core_rmem_max: 7500000
+
+# Specifies the maximum size of the socket send buffer (`net.core.wmem_max`) kernel parameter on the host (which will cascade into the container) to at least this value.
+# If the host uses a larger value, this will be ignored.
+#
+# See the comment for `adguard_home_host_sysctl_minimum_net_core_rmem_max` for more details
+# about why we need to increase these buffers.
+#
+# If this is blank, no sysctl changes will be made.
+adguard_home_host_sysctl_minimum_net_core_wmem_max: 7500000
+
 # adguard_home_container_labels_traefik_enabled controls whether labels to assist a Traefik reverse-proxy will be attached to the container.
 # See `../templates/labels.j2` for details.
 #
