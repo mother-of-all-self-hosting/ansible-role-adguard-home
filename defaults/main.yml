@@ -9,7 +9,7 @@ adguard_home_identifier: adguard-home
 adguard_home_uid: ''
 adguard_home_gid: ''
 
-adguard_home_version: v0.107.58
+adguard_home_version: v0.107.59
 
 # The hostname at which adguard-home is served.
 adguard_home_hostname: ''
