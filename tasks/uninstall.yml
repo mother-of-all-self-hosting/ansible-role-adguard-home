@@ -23,7 +23,7 @@
         path: "{{ devture_systemd_docker_base_systemd_path }}/{{ adguard_home_identifier }}.service"
         state: absent
 
-    - name: Ensure AdGuard Home path doesn't exist
+    - name: Ensure AdGuard Home path does not exist
       ansible.builtin.file:
         path: "{{ adguard_home_base_path }}"
         state: absent
