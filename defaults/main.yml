@@ -13,6 +13,7 @@ adguard_home_identifier: adguard-home
 adguard_home_uid: ''
 adguard_home_gid: ''
 
+# renovate: datasource=docker depName=adguard/adguardhome
 adguard_home_version: v0.107.60
 
 # The hostname at which adguard-home is served.
