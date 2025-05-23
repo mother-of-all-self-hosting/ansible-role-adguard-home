@@ -67,3 +67,4 @@
   ansible.builtin.template:
     src: "{{ role_path }}/templates/systemd/adguard-home.service.j2"
     dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ adguard_home_identifier }}.service"
+    mode: 0644
