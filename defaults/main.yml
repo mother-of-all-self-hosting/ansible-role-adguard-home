@@ -165,11 +165,14 @@ adguard_home_floc_optout_enabled: true
 # See: `adguard_home_http_header_strict_transport_security`
 adguard_home_hsts_preload_enabled: false
 
-# List of systemd services that adguard-home.service depends on
+# List of systemd services that the AdGuard Home systemd service depends on
 adguard_home_systemd_required_services_list: "{{ adguard_home_systemd_required_services_list_default + adguard_home_systemd_required_services_list_auto + adguard_home_systemd_required_services_list_custom }}"
 adguard_home_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
 adguard_home_systemd_required_services_list_auto: []
 adguard_home_systemd_required_services_list_custom: []
+
+# List of systemd services that the AdGuard Home systemd service wants
+adguard_home_systemd_wanted_services_list: []
 
 # Specifies the maximum size of the socket receive buffer (`net.core.rmem_max`) kernel parameter on the host (which will cascade into the container) to at least this value.
 # If the host uses a larger value, this will be ignored.

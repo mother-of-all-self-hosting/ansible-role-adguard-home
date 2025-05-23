@@ -10,6 +10,9 @@ Description=AdGuard Home ({{ adguard_home_identifier }})
 Requires={{ service }}
 After={{ service }}
 {% endfor %}
+{% for service in adguard_home_systemd_wanted_services_list %}
+Wants={{ service }}
+{% endfor %}
 DefaultDependencies=no
 
 [Service]
