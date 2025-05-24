@@ -3,8 +3,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-
 - name: Perform AdGuard Home installation tasks
+  tags:
+    - setup-all
+    - setup-adguard-home
+    - install-all
+    - install-adguard-home
+
   block:
     - name: Validate AdGuard Home configuration
       when: adguard_home_enabled | bool
@@ -13,17 +18,12 @@
     - name: Install AdGuard Home
       when: adguard_home_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
+
+- name: Perform AdGuard Home uninstallation tasks
   tags:
     - setup-all
     - setup-adguard-home
-    - install-all
-    - install-adguard-home
-
-- name: Perform AdGuard Home uninstallation tasks
   block:
     - name: Uninstall AdGuard Home
       when: not adguard_home_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
-  tags:
-    - setup-all
-    - setup-adguard-home
