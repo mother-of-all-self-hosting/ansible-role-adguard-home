@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2014 Will Thames
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+---
+
+name: ansible-lint
+
+on:  # yamllint disable-line rule:truthy
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: Ansible Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run ansible-lint
+        uses: ansible/ansible-lint@v25.4.0
+        with:
+          args: ""
+          setup_python: "true"
+          working_directory: ""
+          requirements_file: ""

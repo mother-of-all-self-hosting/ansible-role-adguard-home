@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-
 - name: Ensure AdGuard Home paths exist
   ansible.builtin.file:
     path: "{{ item.path }}"
@@ -25,7 +24,7 @@
   ansible.builtin.template:
     src: "{{ role_path }}/templates/{{ item }}.j2"
     dest: "{{ adguard_home_base_path }}/{{ item }}"
-    mode: 0640
+    mode: "0640"
     owner: "{{ adguard_home_uid }}"
     group: "{{ adguard_home_gid }}"
   with_items:
@@ -67,4 +66,4 @@
   ansible.builtin.template:
     src: "{{ role_path }}/templates/systemd/adguard-home.service.j2"
     dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ adguard_home_identifier }}.service"
-    mode: 0644
+    mode: "0644"
