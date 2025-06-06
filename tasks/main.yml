@@ -4,6 +4,7 @@
 
 ---
 - name: Perform AdGuard Home installation tasks
+  when: adguard_home_enabled | bool
   tags:
     - setup-all
     - setup-adguard-home
@@ -11,17 +12,15 @@
     - install-adguard-home
   block:
     - name: Validate AdGuard Home configuration
-      when: adguard_home_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
     - name: Install AdGuard Home
-      when: adguard_home_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
 
 - name: Perform AdGuard Home uninstallation tasks
+  when: not adguard_home_enabled | bool
   tags:
     - setup-all
     - setup-adguard-home
   block:
     - name: Uninstall AdGuard Home
-      when: not adguard_home_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
