@@ -17,7 +17,7 @@ adguard_home_config_path: "{{ adguard_home_base_path }}/config"
 adguard_home_workdir_path: "{{ adguard_home_base_path }}/workdir"
 
 # renovate: datasource=docker depName=adguard/adguardhome
-adguard_home_version: v0.107.62
+adguard_home_version: v0.107.63
 
 adguard_home_uid: ""
 adguard_home_gid: ""
