@@ -79,7 +79,7 @@ adguard_home_container_labels_traefik_tls: "{{ adguard_home_container_labels_tra
 adguard_home_container_labels_traefik_tls_certResolver: default  # noqa var-naming
 
 # Controls which additional headers to attach to all HTTP requests.
-# To add your own custom request headers, use `adguard_home_container_labels_traefik_additional_response_headers_custom`
+# To add your own custom request headers, use `adguard_home_container_labels_traefik_additional_request_headers_custom`
 adguard_home_container_labels_traefik_additional_request_headers: "{{ adguard_home_container_labels_traefik_additional_request_headers_auto | combine(adguard_home_container_labels_traefik_additional_request_headers_custom) }}"
 adguard_home_container_labels_traefik_additional_request_headers_auto: {}
 adguard_home_container_labels_traefik_additional_request_headers_custom: {}
