@@ -10,21 +10,25 @@ SPDX-FileCopyrightText: 2022 Julian Foad
 SPDX-FileCopyrightText: 2022 Warren Bailey
 SPDX-FileCopyrightText: 2023 Antonis Christofides
 SPDX-FileCopyrightText: 2023 Felix Stupp
+SPDX-FileCopyrightText: 2023 Julian-Samuel Gebühr
 SPDX-FileCopyrightText: 2023 Pierre 'McFly' Marty
 SPDX-FileCopyrightText: 2024 - 2025 Suguru Hirahara
+SPDX-FileCopyrightText: 2024 MASH project contributors
+SPDX-FileCopyrightText: 2024 Sergio Durigan Junior
 
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 # Setting up AdGuard Home
 
-This is an [Ansible](https://www.ansible.com/) role which installs [AdGuard Home](https://github.com/httpjamesm/AdGuard Home) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
+This is an [Ansible](https://www.ansible.com/) role which installs [AdGuard Home](https://adguard.com/en/adguard-home/overview.html) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
-AdGuard Home allows you to view StackOverflow threads without exposing your IP address, browsing habits, and other browser fingerprinting data to the website.
+AdGuard Home is a network-wide DNS software for blocking ads & tracking.
 
-See the project's [documentation](https://github.com/httpjamesm/AdGuard Home/blob/main/README.md) to learn what AdGuard Home does and why it might be useful to you.
+See the project's [documentation](https://adguard.com/kb/) to learn what AdGuard Home does and why it might be useful to you.
 
-[<img src="assets/home_dark.webp" title="Home screen in dark mode" width="600" alt="Home screen in dark mode">](assets/home_dark.webp) [<img src="assets/question_dark.webp" title="Question in dark mode" width="600" alt="Question in dark mode">](assets/question_dark.webp) [<img src="assets/answers_light.webp" title="Answer in light mode" width="600" alt="Answer in light mode">](assets/answers_light.webp)
+> [!WARNING]
+> Running a public DNS server is not advisable. You'd better install AdGuard Home in a trusted local network, or adjust its network interfaces and port exposure (via the variables in the [Networking](#networking) configuration section below) so that you don't expose your DNS server publicly to the whole world. If you're exposing your DNS server publicly, consider restricting who can use it by adjusting the **Allowed clients** setting in the **Access settings** section of **Settings** -> **DNS settings**.
 
 ## Adjusting the playbook configuration
 
@@ -58,7 +62,12 @@ adguard_home_hostname: "example.com"
 
 After adjusting the hostname, make sure to adjust your DNS records to point the domain to your server.
 
-**Note**: hosting AdGuard Home under a subpath (by configuring the `adguard_home_path_prefix` variable) does not seem to be possible due to AdGuard Home's technical limitations.
+>[!WARNING]
+> When hosting under a subpath, there are quirks caused by [this bug](https://github.com/AdguardTeam/AdGuardHome/issues/5478), such as:
+>
+> - upon initial usage, you will be redirected to `/install.html` and would need to manually adjust this URL to something like `/adguard-home/install.html` (depending on your `adguard_home_path_prefix`). After the installation wizard completes, you'd be redirected to `/index.html` incorrectly as well.
+>
+> - every time you hit the homepage and you're not logged in, you will be redirected to `/login.html` and would need to manually adjust this URL to something like `/adguard-home/login.html` (depending on your `adguard_home_path_prefix`)
 
 ### Extending the configuration
 
@@ -67,8 +76,6 @@ There are some additional things you may wish to configure about the component.
 Take a look at:
 
 - [`defaults/main.yml`](../defaults/main.yml) for some variables that you can customize via your `vars.yml` file. You can override settings (even those that don't have dedicated playbook variables) using the `adguard_home_environment_variables_additional_variables` variable
-
-See its [`docker-compose.example.yml`](https://github.com/httpjamesm/AdGuard Home/blob/main/docker-compose.example.yml) for a complete list of AdGuard Home's config options that you could put in `adguard_home_environment_variables_additional_variables`.
 
 ## Installing
 
@@ -84,12 +91,47 @@ If you use the MASH playbook, the shortcut commands with the [`just` program](ht
 
 After running the command for installation, AdGuard Home becomes available at the specified hostname like `https://example.com`.
 
-[Libredirect](https://libredirect.github.io/), an extension for Firefox and Chromium-based desktop browsers, has support for redirections to AdGuard Home. See [this section](https://github.com/httpjamesm/AdGuard Home/blob/main/README.md#how-to-make-stack-overflow-links-take-you-to-anonymousoverflow-automatically) on the official documentation for more information.
+To get started, open the URL with a web browser, and follow the set up wizard.
 
-If you would like to make your instance public so that it can be used by anyone including Libredirect, please consider to send a PR to the [upstream project](https://github.com/httpjamesm/AdGuard Home) to add yours to [`instances.json`](https://github.com/httpjamesm/AdGuard Home/blob/main/instances.json), which Libredirect automatically fetches using a script (see [this FAQ entry](https://libredirect.github.io/faq.html#where_the_hell_are_those_instances_coming_from)).
+On the set up wizard, **make sure to set the HTTP port under "Admin Web Interface" to `3000`**. This is the in-container port that our Traefik setup expects and uses for serving the install wizard to begin with. If you go with the default (`80`), the web UI will stop working after the installation wizard completes.
+
+Things you should consider doing later:
+
+- increasing the per-client Rate Limit (from the default of `20`) in the **DNS server configuration** section in **Settings** -> **DNS Settings**
+- enabling caching in the **DNS cache configuration** section in **Settings** -> **DNS Settings**
+- adding additional blocklists by discovering them on [Firebog](https://firebog.net/) or other sources and importing them from **Filters** -> **DNS blocklists**
+- reading the AdGuard Home [README](https://github.com/AdguardTeam/AdGuardHome/blob/master/README.md) and [Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki)
 
 ## Troubleshooting
 
 ### Check the service's logs
 
 You can find the logs in [systemd-journald](https://www.freedesktop.org/software/systemd/man/systemd-journald.service.html) by logging in to the server with SSH and running `journalctl -fu adguard-home` (or how you/your playbook named the service, e.g. `mash-adguard-home`).
+
+### Workaround for the issue related non-root account
+
+Adguard Home does not currently support being setup with a non-`root` account (see [issue](https://github.com/AdguardTeam/AdGuardHome/issues/4714)). As the playbook uses the user `mash` when starting services, you will likely encounter the following error when `adguard-home.service` tries to start for the first time:
+
+```
+mar 02 19:11:59 $hostname mash-adguard-home[872496]: 2024/03/02 18:11:59.706251 [info] Checking if AdGuard Home has necessary permissions
+mar 02 19:11:59 $hostname mash-adguard-home[872496]: 2024/03/02 18:11:59.706257 [fatal] This is the first launch of AdGuard Home. You must run it as Administrator.
+```
+
+You can workaround this issue by editing `mash-adguard-home.service` and temporarily make it start Adguard Home as the `root` user for the first time, and then revert it back to using a regular user afterwards. Follow the steps below, which require you to be `root` to execute the commands:
+
+1. Run `systemctl edit --full mash-adguard-home.service` to edit Adguard Home's service file and remove or comment out the line starting with `--user` (e.g. `--user=996:3992 \` — the numbers represent the uid/gid of the `mash` user, so your values may be different):
+
+	```
+	ExecStartPre=/usr/bin/env docker create \
+	                        --rm \
+	                        --name=mash-adguard-home \
+	                        --log-driver=none \
+	                        --user=996:3992 \  <--- remove temporarily
+	```
+
+2. Run `systemctl restart mash-adguard-home.service` to restart the service.
+3. Perform the first time setup as documented under [usage](#usage).
+4. Run `systemctl stop mash-adguard-home.service` to stop the service.
+5. Run `chown -R mash:mash /mash/adguard-home/workdir` to change ownership of the files created during the first-time setup from `root` to `mash`. Optionally, use `ls -ll /mash/adguard-home/workdir` to check the file ownership before and after running `chown`.
+6. Run the playbook again to rebuild `/etc/systemd/system/mash-adguard-home.service` and start AdGuard Home again: `just install-service adguard-home.service`.
+7. If you didn't get any errors, Adguard Home should be running correctly. You can also check on the service with: `journalctl -fu mash-adguard-home.service`.
