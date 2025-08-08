@@ -63,7 +63,7 @@ adguard_home_hostname: "example.com"
 After adjusting the hostname, make sure to adjust your DNS records to point the domain to your server.
 
 >[!WARNING]
-> When hosting under a subpath, there are quirks caused by [this bug](https://github.com/AdguardTeam/AdGuardHome/issues/5478), such as:
+> When hosting under a subpath with `adguard_home_path_prefix`, there are quirks caused by [this bug](https://github.com/AdguardTeam/AdGuardHome/issues/5478), such as:
 >
 > - upon initial usage, you will be redirected to `/install.html` and would need to manually adjust this URL to something like `/adguard-home/install.html` (depending on your `adguard_home_path_prefix`). After the installation wizard completes, you'd be redirected to `/index.html` incorrectly as well.
 >
