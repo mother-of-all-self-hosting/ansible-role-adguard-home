@@ -28,7 +28,26 @@ AdGuard Home is a network-wide DNS software for blocking ads & tracking.
 See the project's [documentation](https://adguard.com/kb/) to learn what AdGuard Home does and why it might be useful to you.
 
 > [!WARNING]
-> Running a public DNS server is not advisable. You'd better install AdGuard Home in a trusted local network, or adjust its network interfaces and port exposure (via the variables in the [Networking](#networking) configuration section below) so that you don't expose your DNS server publicly to the whole world. If you're exposing your DNS server publicly, consider restricting who can use it by adjusting the **Allowed clients** setting in the **Access settings** section of **Settings** -> **DNS settings**.
+> Running a public DNS server is not advisable. You'd better install AdGuard Home in a trusted local network, or adjust its network interfaces and port exposure (via the variables you can find on the section below about [opening ports](#open-ports)) so that you don't expose your DNS server publicly to the whole world. If you're exposing your DNS server publicly, consider restricting who can use it by adjusting the **Allowed clients** setting in the **Access settings** section of **Settings** -> **DNS settings**.
+
+## Prerequisites
+
+### Open ports
+
+You may need to open the following ports on your server:
+
+- `53` over **TCP**, controlled by `adguard_home_container_dns_tcp_bind_port` — used for DNS over TCP
+- `53` over **UDP**, controlled by `adguard_home_container_dns_udp_bind_port` — used for DNS over UDP
+
+Docker automatically opens these ports in the server's firewall, so you likely don't need to do anything. If you use another firewall in front of the server, you may need to adjust it.
+
+By default, those ports will be exposed by the container on **all network interfaces**. To expose these ports only on **some** network interfaces, add the following configuration to your `vars.yml` file:
+
+```yaml
+# Expose only on 192.168.1.15
+adguard_home_container_dns_tcp_bind_port: '192.168.1.15:53'
+adguard_home_container_dns_udp_bind_port: '192.168.1.15:53'
+```
 
 ## Adjusting the playbook configuration
 
