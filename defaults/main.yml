@@ -174,7 +174,10 @@ adguard_home_systemd_required_services_list_auto: []
 adguard_home_systemd_required_services_list_custom: []
 
 # List of systemd services that the AdGuard Home systemd service wants
-adguard_home_systemd_wanted_services_list: []
+adguard_home_systemd_wanted_services_list: "{{ adguard_home_systemd_wanted_services_list_default + adguard_home_systemd_wanted_services_list_auto + adguard_home_systemd_wanted_services_list_custom }}"
+adguard_home_systemd_wanted_services_list_default: []
+adguard_home_systemd_wanted_services_list_auto: []
+adguard_home_systemd_wanted_services_list_custom: []
 
 # Specifies the maximum size of the socket receive buffer (`net.core.rmem_max`) kernel parameter on the host (which will cascade into the container) to at least this value.
 # If the host uses a larger value, this will be ignored.
