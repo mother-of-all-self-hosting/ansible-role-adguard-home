@@ -179,6 +179,9 @@ adguard_home_systemd_wanted_services_list_default: []
 adguard_home_systemd_wanted_services_list_auto: []
 adguard_home_systemd_wanted_services_list_custom: []
 
+# Specify the timezone
+adguard_home_environment_variables_tz: UTC
+
 # Specifies the maximum size of the socket receive buffer (`net.core.rmem_max`) kernel parameter on the host (which will cascade into the container) to at least this value.
 # If the host uses a larger value, this will be ignored.
 #
