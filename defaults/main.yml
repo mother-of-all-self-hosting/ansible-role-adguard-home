@@ -115,7 +115,9 @@ adguard_home_container_labels_additional_labels: ""
 adguard_home_container_hostname: ""
 
 # A list of extra arguments to pass to the container (`docker create` command)
-adguard_home_container_extra_arguments: []
+adguard_home_container_extra_arguments: "{{ adguard_home_container_extra_arguments_auto + adguard_home_container_extra_arguments_custom }}"
+adguard_home_container_extra_arguments_auto: []
+adguard_home_container_extra_arguments_custom: []
 
 # Additional environment variables.
 adguard_home_environment_variables_additional_variables: ""
