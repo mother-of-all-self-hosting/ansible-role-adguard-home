@@ -55,4 +55,6 @@ traefik.http.routers.{{ adguard_home_identifier }}.tls.certResolver={{ adguard_h
 traefik.http.services.{{ adguard_home_identifier }}.loadbalancer.server.port=3000
 {% endif %}
 
-{{ adguard_home_container_labels_additional_labels }}
+{% for arg in adguard_home_container_labels_additional_labels %}
+{{ arg }}
+{% endfor %}
