@@ -111,6 +111,7 @@ adguard_home_container_labels_traefik_additional_response_headers_custom: {}
 adguard_home_container_labels_additional_labels: "{{ adguard_home_container_labels_additional_labels_auto + adguard_home_container_labels_additional_labels_custom }}"
 adguard_home_container_labels_additional_labels_auto: []
 adguard_home_container_labels_additional_labels_custom: []
+
 # Intentionally leaving this blank, instead of defaulting it to `headscale_hostname`, to avoid specifying a hostname
 # and which could render other services on that hostname potentially unreachable.
 # See: https://github.com/mother-of-all-self-hosting/mash-playbook/issues/391
