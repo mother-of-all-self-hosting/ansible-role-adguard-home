@@ -36,6 +36,9 @@ adguard_home_container_image_registry_prefix_upstream: "{{ adguard_home_containe
 adguard_home_container_image_registry_prefix_upstream_default: docker.io/
 adguard_home_container_image_force_pull: "{{ adguard_home_container_image.endswith(':latest') }}"
 
+# The base container network. It will be auto-created by this role if it doesn't exist already.
+adguard_home_container_network: "{{ adguard_home_identifier }}"
+
 # Specifies how the container publishes its TCP DNS port
 #
 # Takes an "<ip>:<port>" value (e.g. "127.0.0.1:53"), just a port number or an empty string to not expose.
@@ -45,9 +48,6 @@ adguard_home_container_dns_tcp_bind_port: "53"
 #
 # Takes an "<ip>:<port>" value (e.g. "127.0.0.1:53"), just a port number or an empty string to not expose.
 adguard_home_container_dns_udp_bind_port: "{{ adguard_home_container_dns_tcp_bind_port }}"
-
-# The base container network. It will be auto-created by this role if it doesn't exist already.
-adguard_home_container_network: "{{ adguard_home_identifier }}"
 
 # A list of additional container networks that the container would be connected to.
 # The role does not create these networks, so make sure they already exist.
