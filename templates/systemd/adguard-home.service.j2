@@ -18,7 +18,7 @@ DefaultDependencies=no
 [Service]
 Type=simple
 Environment="HOME={{ devture_systemd_docker_base_systemd_unit_home_path }}"
-ExecStartPre={{ devture_systemd_docker_base_host_command_sh }} -c 'i=0; while [ "$i" -lt 10 ]; do {{ devture_systemd_docker_base_host_command_docker }} rm -f {{ adguard_home_identifier }} >/dev/null 2>&1 || true; if ! {{ devture_systemd_docker_base_host_command_docker }} inspect {{ adguard_home_identifier }} >/dev/null 2>&1; then exit 0; fi; i=$((i + 1)); sleep 1; done; echo "Failed to remove stale container {{ adguard_home_identifier }}" >&2; exit 1'
+ExecStartPre={{ devture_systemd_docker_base_host_command_sh }} -c 'i=0; while [ "$i" -lt 10 ]; do {{ devture_systemd_docker_base_host_command_docker }} rm -f {{ adguard_home_identifier }} >/dev/null 2>&1 || true; if ! {{ devture_systemd_docker_base_host_command_docker }} inspect --type=container {{ adguard_home_identifier }} >/dev/null 2>&1; then exit 0; fi; i=$((i + 1)); sleep 1; done; echo "Failed to remove stale container {{ adguard_home_identifier }}" >&2; exit 1'
 
 {% if adguard_home_host_sysctl_minimum_net_core_rmem_max %}
 ExecStartPre={{ devture_systemd_docker_base_host_command_sh }} -c 'current_rmem=$(sysctl -n net.core.rmem_max); if [ "$current_rmem" -lt {{ adguard_home_host_sysctl_minimum_net_core_rmem_max }} ]; then sysctl -w net.core.rmem_max={{ adguard_home_host_sysctl_minimum_net_core_rmem_max }}; fi'
