@@ -18,8 +18,7 @@ DefaultDependencies=no
 [Service]
 Type=simple
 Environment="HOME={{ devture_systemd_docker_base_systemd_unit_home_path }}"
-ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} stop -t {{ devture_systemd_docker_base_container_stop_grace_time_seconds }} {{ adguard_home_identifier }} 2>/dev/null || true'
-ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ adguard_home_identifier }} 2>/dev/null || true'
+ExecStartPre={{ devture_systemd_docker_base_host_command_sh }} -c '{{ adguard_home_container_cleanup_command | trim | replace("\n", " ") }}'
 
 {% if adguard_home_host_sysctl_minimum_net_core_rmem_max %}
 ExecStartPre={{ devture_systemd_docker_base_host_command_sh }} -c 'current_rmem=$(sysctl -n net.core.rmem_max); if [ "$current_rmem" -lt {{ adguard_home_host_sysctl_minimum_net_core_rmem_max }} ]; then sysctl -w net.core.rmem_max={{ adguard_home_host_sysctl_minimum_net_core_rmem_max }}; fi'
