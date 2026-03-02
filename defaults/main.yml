@@ -125,9 +125,6 @@ adguard_home_container_extra_arguments: "{{ adguard_home_container_extra_argumen
 adguard_home_container_extra_arguments_auto: []
 adguard_home_container_extra_arguments_custom: []
 
-# Additional environment variables.
-adguard_home_environment_variables_additional_variables: ""
-
 # Specifies the value of the `X-XSS-Protection` header
 # Stops pages from loading when they detect reflected cross-site scripting (XSS) attacks.
 #
@@ -218,9 +215,6 @@ adguard_home_container_cleanup_command: |
   echo "Failed to remove stale container {{ adguard_home_identifier }} after {{ adguard_home_container_cleanup_timeout_seconds }} attempts" >&2;
   exit 1
 
-# Specify the timezone
-adguard_home_environment_variables_tz: UTC
-
 # Specifies the maximum size of the socket receive buffer (`net.core.rmem_max`) kernel parameter on the host (which will cascade into the container) to at least this value.
 # If the host uses a larger value, this will be ignored.
 #
@@ -246,3 +240,9 @@ adguard_home_host_sysctl_minimum_net_core_rmem_max: 7500000
 #
 # If this is blank, no sysctl changes will be made.
 adguard_home_host_sysctl_minimum_net_core_wmem_max: 7500000
+
+# Specify the timezone
+adguard_home_environment_variables_tz: UTC
+
+# Additional environment variables.
+adguard_home_environment_variables_additional_variables: ""
