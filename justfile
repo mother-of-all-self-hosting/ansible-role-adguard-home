@@ -5,6 +5,10 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+# show help by default
+default:
+    @{{ just_executable() }} --list --justfile "{{ justfile() }}"
+
 # mise (dev tool version manager)
 mise_data_dir := env("MISE_DATA_DIR", justfile_directory() / "var/mise")
 mise_trusted_config_paths := justfile_directory() / "mise.toml"
