@@ -1,0 +1,63 @@
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+---
+dependency:
+  name: galaxy
+  options:
+    requirements-file: requirements.yml
+    force: true
+driver:
+  name: docker
+platforms:
+  - name: adguard-home-${MOLECULE_DISTRO:-ubuntu2604}-default
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2604}-ansible:latest"
+    command: ${MOLECULE_DOCKER_COMMAND:-""}
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    cgroupns_mode: host
+    privileged: true
+    pre_build_image: true
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      callback_result_format: yaml
+  inventory:
+    group_vars:
+      all:
+        # Helper variables
+        adguard_home_debug_service_enabled: false
+
+        # The port on the host that the AdGuard Home web interface is published
+        # on. The role itself does not publish it (the web interface is meant to
+        # be reached through a reverse-proxy), so the scenario publishes it via
+        # `adguard_home_container_extra_arguments_custom` below.
+        adguard_home_molecule_web_bind_port: 3000
+
+        # The port on the host that AdGuard Home answers DNS queries on.
+        # Nothing else in the test container listens on 53 (systemd-resolved is
+        # not running there), so the real DNS port can be used.
+        adguard_home_molecule_dns_bind_port: 53
+
+        # Variables for AdGuard Home
+        adguard_home_uid: 1000
+        adguard_home_gid: 1000
+        adguard_home_hostname: localhost
+        adguard_home_container_labels_traefik_enabled: false
+
+        # Pinned to a literal value, because `prepare.yml` seeds a configuration
+        # file into this directory and cannot resolve the role's own default
+        # (which is derived from other variables).
+        adguard_home_config_path: /adguard-home/config
+
+        adguard_home_container_dns_tcp_bind_port: "127.0.0.1:{{ adguard_home_molecule_dns_bind_port }}"
+
+        adguard_home_container_extra_arguments_custom:
+          - "-p 127.0.0.1:{{ adguard_home_molecule_web_bind_port }}:3000"
+  env:
+    # Workaround for https://github.com/ansible/molecule/issues/4391
+    ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/..:/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:~/.ansible/roles
+verifier:
+  name: ansible

@@ -1,0 +1,150 @@
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+---
+- name: Verify AdGuard Home
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    # Role defaults are not in scope here, but the version that Renovate bumps
+    # lives in them and is what the API is checked against below.
+    - name: Load the AdGuard Home role defaults
+      ansible.builtin.include_vars:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
+        name: adguard_home_defaults
+
+    - name: Wait for AdGuard Home service to become active (up to 180s)
+      ansible.builtin.systemd:
+        name: adguard-home.service
+      register: adguard_home_service
+      until: adguard_home_service.status.ActiveState == 'active'
+      retries: 36
+      delay: 5
+
+    - name: Assert AdGuard Home service is active
+      ansible.builtin.assert:
+        that: adguard_home_service.status.ActiveState == 'active'
+        fail_msg: "adguard-home.service not active ({{ adguard_home_service.status.ActiveState }})"
+        success_msg: "adguard-home.service is active"
+
+    - name: Retrieve AdGuard Home service log for debugging
+      when: adguard_home_debug_service_enabled | bool
+      ansible.builtin.command:
+        cmd: journalctl -xeu adguard-home.service
+      changed_when: false
+
+    # An AdGuard Home that has not been through its first-run wizard redirects
+    # every web path to `/install.html`, this endpoint included. A 200 here is
+    # therefore what tells a serving AdGuard Home apart from a merely running
+    # container. The payload also reports the running version and whether the
+    # DNS server is up, both of which are asserted below.
+    - name: Wait for the AdGuard Home API to report its status (up to 180s)
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ adguard_home_molecule_web_bind_port }}/control/status"
+        method: GET
+        # A redirect to the installation wizard must not be followed - it
+        # answers with a 200 and would mask an unconfigured instance.
+        follow_redirects: none
+        return_content: true
+      register: adguard_home_status
+      until: adguard_home_status.status == 200
+      retries: 36
+      delay: 5
+
+    # AdGuard Home reports its version with a leading `v` (`v0.107.79`), the
+    # same way the role's version variable carries one. Compared as a prefix,
+    # with any leading `v` normalized away on both sides, so that this keeps
+    # holding if either side ever stops carrying one or starts carrying a
+    # build suffix.
+    - name: Assert the running AdGuard Home is the version this role installs
+      ansible.builtin.assert:
+        that: >-
+          (adguard_home_status.json.version | regex_replace('^v', '')).startswith(
+            adguard_home_defaults.adguard_home_version | regex_replace('^v', '')
+          )
+        fail_msg: "AdGuard Home reports {{ adguard_home_status.json.version }}, expected {{ adguard_home_defaults.adguard_home_version }}"
+        success_msg: "AdGuard Home reports {{ adguard_home_status.json.version }}"
+
+    - name: Assert AdGuard Home is running with protection enabled
+      ansible.builtin.assert:
+        that:
+          - adguard_home_status.json.running | bool
+          - adguard_home_status.json.protection_enabled | bool
+          - adguard_home_status.json.dns_port == 53
+        fail_msg: "AdGuard Home is not serving as expected: {{ adguard_home_status.json }}"
+        success_msg: "AdGuard Home is running with protection enabled"
+
+    # The DNS server is the point of this role, and it is a completely separate
+    # listener from the web interface: an AdGuard Home whose configuration did
+    # not load does not start it at all, and the query below times out.
+    #
+    # Asked over the published UDP port with a hand-built DNS packet, because
+    # the test container ships neither `dig` nor `nslookup`, and answered by
+    # AdGuard Home itself from the rewrite that `prepare.yml` configured, so no
+    # upstream resolver or internet access is involved.
+    - name: Resolve a name through AdGuard Home over DNS (up to 60s)
+      ansible.builtin.command:
+        argv:
+          - python3
+          - -c
+          - |
+            import socket
+
+            query = (
+                b"\xab\xcd\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00"
+                b"\x08molecule\x04test\x00"
+                b"\x00\x01\x00\x01"
+            )
+
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.settimeout(5)
+            sock.sendto(query, ("127.0.0.1", 53))
+            response, _ = sock.recvfrom(4096)
+
+            print("rcode=%d answers=%d address=%s" % (
+                response[3] & 0x0F,
+                int.from_bytes(response[6:8], "big"),
+                socket.inet_ntoa(response[-4:]),
+            ))
+      register: adguard_home_dns_query
+      changed_when: false
+      until: "'address=203.0.113.10' in adguard_home_dns_query.stdout"
+      retries: 12
+      delay: 5
+
+    - name: Assert AdGuard Home answered the DNS query
+      ansible.builtin.assert:
+        that:
+          - "'rcode=0' in adguard_home_dns_query.stdout"
+          - "'answers=1' in adguard_home_dns_query.stdout"
+          - "'address=203.0.113.10' in adguard_home_dns_query.stdout"
+        fail_msg: "AdGuard Home did not answer the DNS query as configured ({{ adguard_home_dns_query.stdout }})"
+        success_msg: "AdGuard Home answered the DNS query ({{ adguard_home_dns_query.stdout }})"
+
+    # Ties the two listeners together: the query above went through the DNS
+    # server, and the web API - a different process-internal subsystem - knows
+    # about it.
+    - name: Query the AdGuard Home query log
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ adguard_home_molecule_web_bind_port }}/control/querylog?limit=20"
+        method: GET
+        follow_redirects: none
+        return_content: true
+      register: adguard_home_querylog
+
+    - name: Assert the DNS query shows up in the AdGuard Home query log
+      ansible.builtin.assert:
+        that: "'molecule.test' in (adguard_home_querylog.json.data | map(attribute='question.name') | list)"
+        fail_msg: "molecule.test is not in the query log: {{ adguard_home_querylog.json.data | default([]) }}"
+        success_msg: "The DNS query was recorded in the AdGuard Home query log"
+
+    - name: Show AdGuard Home verification summary
+      ansible.builtin.debug:
+        msg:
+          - "AdGuard Home systemd: {{ adguard_home_service.status.ActiveState }}"
+          - "AdGuard Home version: {{ adguard_home_status.json.version }}"
+          - "AdGuard Home running: {{ adguard_home_status.json.running }}"
+          - "AdGuard Home DNS: {{ adguard_home_dns_query.stdout }}"
+          - "AdGuard Home query log entries: {{ adguard_home_querylog.json.data | length }}"

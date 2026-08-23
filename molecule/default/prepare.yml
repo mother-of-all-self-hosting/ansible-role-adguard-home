@@ -1,0 +1,84 @@
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+---
+- name: Prepare AdGuard Home Molecule tests
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Ensure apt cache is updated for AdGuard Home Molecule tests preparation
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 600
+      when: ansible_facts["os_family"] == 'Debian'
+
+    - name: Ensure required packages are installed for AdGuard Home Molecule tests preparation
+      ansible.builtin.package:
+        name:
+          - python3-requests
+        state: present
+
+    - name: Ensure Docker is installed for AdGuard Home Molecule tests preparation
+      ansible.builtin.include_role:
+        name: ansible-role-docker
+      vars:
+        docker_daemon_options:
+          storage-driver: vfs
+
+    # This role deliberately does not template AdGuard Home's own configuration
+    # file - AdGuard Home owns and rewrites it, and users go through its
+    # first-run wizard (or restore a backup) to create it.
+    #
+    # A container started without one serves nothing but that wizard: every web
+    # path (`/control/status` included) is redirected to `/install.html`, and
+    # the DNS server is not started at all, so queries simply time out. Seeding
+    # a configuration file here is what a real deployment ends up with after the
+    # wizard, and is what lets `verify.yml` probe an actually-serving instance.
+    #
+    # The rewrite below makes the DNS probe in `verify.yml` self-contained:
+    # AdGuard Home answers it from its own configuration, without reaching an
+    # upstream resolver or the internet.
+    - name: Ensure AdGuard Home configuration directory exists for Molecule tests
+      ansible.builtin.file:
+        path: "{{ adguard_home_config_path }}"
+        state: directory
+        owner: "{{ adguard_home_uid }}"
+        group: "{{ adguard_home_gid }}"
+        mode: "0750"
+
+    - name: Ensure AdGuard Home is configured for Molecule tests
+      ansible.builtin.copy:
+        dest: "{{ adguard_home_config_path }}/AdGuardHome.yaml"
+        owner: "{{ adguard_home_uid }}"
+        group: "{{ adguard_home_gid }}"
+        mode: "0640"
+        # Never clobber a configuration file that AdGuard Home has since
+        # rewritten by itself.
+        force: false
+        content: |
+          http:
+            address: 0.0.0.0:3000
+          # No users, so that the HTTP API can be queried without credentials.
+          # This role does not manage AdGuard Home credentials.
+          users: []
+          dns:
+            bind_hosts:
+              - 0.0.0.0
+            port: 53
+            upstream_dns:
+              - 127.0.0.1:53
+            bootstrap_dns:
+              - 127.0.0.1:53
+          filtering:
+            filtering_enabled: true
+            protection_enabled: true
+            rewrites:
+              - domain: molecule.test
+                answer: 203.0.113.10
+          # No filter lists, so that AdGuard Home does not try to download any.
+          filters: []
+          querylog:
+            enabled: true
+          schema_version: 29
