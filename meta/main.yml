@@ -3,7 +3,7 @@ galaxy_info:
   author: etke.cc
   company: etke.cc
   role_name: adguard_home
-  namespace: etkecc
+  namespace: mash
   description: AdGuard Home
   platforms:
     - name: Debian
