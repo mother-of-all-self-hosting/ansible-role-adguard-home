@@ -66,7 +66,7 @@
           (adguard_home_status.json.version | regex_replace('^v', '')).startswith(
             adguard_home_defaults.adguard_home_version | regex_replace('^v', '')
           )
-        fail_msg: "AdGuard Home reports {{ adguard_home_status.json.version }}, expected {{ adguard_home_defaults.adguard_home_version }}"
+        fail_msg: "AdGuard Home reports {{ adguard_home_status.json.version | default('none') }}, expected {{ adguard_home_defaults.adguard_home_version }}"
         success_msg: "AdGuard Home reports {{ adguard_home_status.json.version }}"
 
     - name: Assert AdGuard Home is running with protection enabled
