@@ -10,9 +10,10 @@
   become: true
   gather_facts: false
   tasks:
-    # Role defaults are not in scope here, but the version that Renovate bumps
-    # lives in them and is what the API is checked against below.
-    - name: Load the AdGuard Home role defaults
+    # The role is not included in this playbook, so its defaults are not in
+    # scope. Reading defaults/main.yml directly ties the version assertion
+    # below.
+    - name: Load the role defaults
       ansible.builtin.include_vars:
         file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
         name: adguard_home_defaults
