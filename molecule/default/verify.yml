@@ -57,16 +57,12 @@
       delay: 5
 
     # AdGuard Home reports its version with a leading `v` (`v0.107.79`), the
-    # same way the role's version variable carries one. Compared as a prefix,
-    # with any leading `v` normalized away on both sides, so that this keeps
-    # holding if either side ever stops carrying one or starts carrying a
-    # build suffix.
+    # same way the role's version variable carries one. Any leading `v` is normalized
+    # away on both sides, so that this keeps holding if either side ever stops
+    # carrying one.
     - name: Assert the running AdGuard Home is the version this role installs
       ansible.builtin.assert:
-        that: >-
-          (adguard_home_status.json.version | regex_replace('^v', '')).startswith(
-            adguard_home_defaults.adguard_home_version | regex_replace('^v', '')
-          )
+        that: (adguard_home_status.json.version | regex_replace('^v', '')) == (adguard_home_defaults.adguard_home_version | regex_replace('^v', ''))
         fail_msg: "AdGuard Home reports {{ adguard_home_status.json.version | default('none') }}, expected {{ adguard_home_defaults.adguard_home_version }}"
         success_msg: "AdGuard Home reports {{ adguard_home_status.json.version }}"
 
