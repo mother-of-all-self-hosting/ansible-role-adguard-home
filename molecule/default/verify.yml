@@ -18,21 +18,27 @@
         file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
         name: adguard_home_defaults
 
-    - name: Wait for AdGuard Home service to become active (up to 180s)
-      ansible.builtin.systemd:
+    - name: Wait for the AdGuard Home systemd service to become active (up to 180s)
+      ansible.builtin.systemd_service:
         name: adguard-home.service
       register: adguard_home_service
       until: adguard_home_service.status.ActiveState == 'active'
       retries: 36
       delay: 5
+      # So that giving up is reported by the assertion below rather than as a
+      # wall of systemd unit properties.
+      failed_when: false
 
-    - name: Assert AdGuard Home service is active
+    # `Restart=always` in the systemd unit means that even a container which crashes
+    # and gets restarted reads as active here, so this is a precondition rather than
+    # a result.
+    - name: Assert the AdGuard Home systemd service is active
       ansible.builtin.assert:
         that: adguard_home_service.status.ActiveState == 'active'
-        fail_msg: "adguard-home.service not active ({{ adguard_home_service.status.ActiveState }})"
+        fail_msg: "adguard-home.service is not active ({{ adguard_home_service.status.ActiveState }})"
         success_msg: "adguard-home.service is active"
 
-    - name: Retrieve AdGuard Home service log for debugging
+    - name: Retrieve the AdGuard Home systemd service log for debugging
       when: adguard_home_debug_service_enabled | bool
       ansible.builtin.command:
         cmd: journalctl -xeu adguard-home.service
