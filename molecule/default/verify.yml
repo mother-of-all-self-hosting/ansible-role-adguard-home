@@ -41,7 +41,7 @@
     - name: Retrieve the AdGuard Home systemd service log for debugging
       when: adguard_home_debug_service_enabled | bool
       ansible.builtin.command:
-        cmd: journalctl -xeu adguard-home.service
+        cmd: journalctl --no-pager --output=cat --unit=adguard-home.service
       changed_when: false
 
     # An AdGuard Home that has not been through its first-run wizard redirects
