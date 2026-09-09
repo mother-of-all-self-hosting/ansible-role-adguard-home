@@ -10,6 +10,8 @@
   become: true
   gather_facts: false
   tasks:
+    - name: Verify that AdGuard Home works
+      block:
     # The role is not included in this playbook, so its defaults are not in
     # scope. Reading defaults/main.yml directly ties the version assertion
     # below.
@@ -152,3 +154,18 @@
           - "AdGuard Home running: {{ adguard_home_status.json.running }}"
           - "AdGuard Home DNS: {{ adguard_home_dns_query.stdout }}"
           - "AdGuard Home query log entries: {{ adguard_home_querylog.json.data | length }}"
+      rescue:
+        # Whatever went wrong, the reason is almost always in the systemd service log.
+        - name: Retrieve the AdGuard Home systemd service log
+          ansible.builtin.command:
+            cmd: journalctl --no-pager --output=cat --unit=adguard-home.service
+          register: adguard_home_service_log
+          changed_when: false
+
+        - name: Show the AdGuard Home systemd service log
+          ansible.builtin.debug:
+            var: adguard_home_service_log.stdout_lines
+
+        - name: Fail because verification did not pass
+          ansible.builtin.fail:
+            msg: "AdGuard Home verification failed. The systemd service log is printed above."
