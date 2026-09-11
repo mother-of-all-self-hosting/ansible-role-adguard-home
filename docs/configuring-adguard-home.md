@@ -125,20 +125,20 @@ Things you should consider doing later:
 
 ### Check the service's logs
 
-You can find the logs in [systemd-journald](https://www.freedesktop.org/software/systemd/man/systemd-journald.service.html) by logging in to the server with SSH and running `journalctl -fu adguard-home` (or how you/your playbook named the service, e.g. `adguard-home`).
+You can find the logs in [systemd-journald](https://www.freedesktop.org/software/systemd/man/systemd-journald.service.html) by logging in to the server with SSH and running `journalctl -fu adguard-home` (or how you/your playbook named the service, e.g. `mash-adguard-home`).
 
 ### Workaround for the issue related non-root account
 
-Adguard Home does not currently support being setup with a non-`root` account (see [issue](https://github.com/AdguardTeam/AdGuardHome/issues/4714)). As the playbook uses the user `mash` when starting services, you will likely encounter the following error when `adguard-home.service` tries to start for the first time:
+Adguard Home does not currently support being setup with a non-`root` account (see [issue](https://github.com/AdguardTeam/AdGuardHome/issues/4714)). As the playbook uses the user `mash` when starting services, you will likely encounter the following error when `mash-adguard-home.service` tries to start for the first time:
 
 ```txt
-mar 02 19:11:59 $hostname adguard-home[872496]: 2024/03/02 18:11:59.706251 [info] Checking if AdGuard Home has necessary permissions
-mar 02 19:11:59 $hostname adguard-home[872496]: 2024/03/02 18:11:59.706257 [fatal] This is the first launch of AdGuard Home. You must run it as Administrator.
+mar 02 19:11:59 $hostname mash-adguard-home[872496]: 2024/03/02 18:11:59.706251 [info] Checking if AdGuard Home has necessary permissions
+mar 02 19:11:59 $hostname mash-adguard-home[872496]: 2024/03/02 18:11:59.706257 [fatal] This is the first launch of AdGuard Home. You must run it as Administrator.
 ```
 
-You can workaround this issue by editing `adguard-home.service` and temporarily make it start Adguard Home as the `root` user for the first time, and then revert it back to using a regular user afterwards. Follow the steps below, which require you to be `root` to execute the commands:
+You can workaround this issue by editing `mash-adguard-home.service` and temporarily make it start Adguard Home as the `root` user for the first time, and then revert it back to using a regular user afterwards. Follow the steps below, which require you to be `root` to execute the commands:
 
-1. Run `systemctl edit --full adguard-home.service` to edit Adguard Home's service file and remove or comment out the line starting with `--user` (e.g. `--user=996:3992 \` — the numbers represent the uid/gid of the `mash` user, so your values may be different):
+1. Run `systemctl edit --full mash-adguard-home.service` to edit Adguard Home's service file and remove or comment out the line starting with `--user` (e.g. `--user=996:3992 \` — the numbers represent the uid/gid of the `mash` user, so your values may be different):
 
     ```txt
     ExecStartPre=/usr/bin/env docker create \
