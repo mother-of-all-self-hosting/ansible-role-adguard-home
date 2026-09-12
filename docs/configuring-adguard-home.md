@@ -39,7 +39,7 @@ You may need to open the following ports on your server:
 - `53` over **TCP**, controlled by `adguard_home_container_dns_tcp_bind_port` — used for DNS over TCP
 - `53` over **UDP**, controlled by `adguard_home_container_dns_udp_bind_port` — used for DNS over UDP
 
-Docker automatically opens these ports in the server's firewall, so you likely don't need to do anything. If you use another firewall in front of the server, you may need to adjust it.
+With the default bridge networking, Docker automatically opens these ports in the server's firewall, so you likely don't need to do anything. If you use another firewall in front of the server, you may need to adjust it. With [host networking](#using-host-networking), you need to open the necessary ports in the host's firewall yourself.
 
 By default, those ports will be exposed by the container on **all network interfaces**. To expose these ports only on **some** network interfaces, add the following configuration to your `vars.yml` file:
 
@@ -87,6 +87,20 @@ After adjusting the hostname, make sure to adjust your DNS records to point the 
 > - upon initial usage, you will be redirected to `/install.html` and would need to manually adjust this URL to something like `/adguard-home/install.html` (depending on your `adguard_home_path_prefix`). After the installation wizard completes, you'd be redirected to `/index.html` incorrectly as well.
 >
 > - every time you hit the homepage and you're not logged in, you will be redirected to `/login.html` and would need to manually adjust this URL to something like `/adguard-home/login.html` (depending on your `adguard_home_path_prefix`)
+
+### Using host networking
+
+By default, AdGuard Home runs in a dedicated Docker bridge network. To use the host's network instead, as required by [AdGuard Home's DHCP server](https://adguard-dns.io/kb/adguard-home/docker/#dhcp-server), add the following to your `vars.yml` file:
+
+```yaml
+adguard_home_container_network: host
+```
+
+In this mode, the role skips Docker network creation and deletion, DNS port publishing, the custom container hostname, and connections to additional container networks (including networks supplied by the MASH playbook). The `adguard_home_container_dns_tcp_bind_port` and `adguard_home_container_dns_udp_bind_port` settings have no effect. Configure listening addresses and ports in AdGuard Home itself, and ensure they do not conflict with other services on the host. Remove any port publishing arguments you added to `adguard_home_container_extra_arguments_custom`.
+
+The web interface also listens directly on the host (port `3000` during initial setup). If using Traefik, keep the web interface on port `3000` and ensure Traefik can reach the host, as described in its [host networking documentation](https://doc.traefik.io/traefik/reference/install-configuration/providers/docker/#host-networking). When accessing AdGuard Home directly without Traefik, set `adguard_home_container_labels_traefik_enabled: false` and use `http://<server-ip>:3000` for initial setup.
+
+Host networking does not enable or configure DHCP by itself. Configure it in AdGuard Home after installation; see the upstream [DHCP documentation](https://adguard-dns.io/kb/adguard-home/dhcp/). DHCP also needs raw socket permissions, which this role's default container capabilities do not grant. Additional capabilities can be supplied via `adguard_home_container_extra_arguments_custom`; non-root containers may also encounter the upstream [DHCP permissions issue](https://github.com/AdguardTeam/AdGuardHome/issues/8319).
 
 ### Extending the configuration
 
