@@ -31,6 +31,7 @@ provisioner:
       all:
         # Helper variables
         adguard_home_debug_service_enabled: false
+        adguard_home_restarts_check_enabled: true
 
         # The port on the host that the AdGuard Home web interface is published
         # on. The role itself does not publish it (the web interface is meant to
