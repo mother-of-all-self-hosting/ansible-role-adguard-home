@@ -203,6 +203,7 @@
               - "AdGuard Home running: {{ adguard_home_status.json.running }}"
               - "AdGuard Home DNS: {{ adguard_home_dns_query.stdout }}"
               - "AdGuard Home query log entries: {{ adguard_home_querylog.json.data | length }}"
+
       rescue:
         # Whatever went wrong, the reason is almost always in the systemd service log.
         - name: Retrieve the AdGuard Home systemd service log
