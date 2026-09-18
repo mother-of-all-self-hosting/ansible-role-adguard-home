@@ -58,7 +58,10 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       {% for arg in adguard_home_container_extra_arguments %}
       {{ arg }} \
       {% endfor %}
-      {{ adguard_home_container_image }}
+      {{ adguard_home_container_image }} \
+      {% for arg in adguard_home_process_extra_arguments %}
+      {{ arg }} \
+      {% endfor %}
 
 {% if adguard_home_container_network != 'host' %}
 {% for network in adguard_home_container_additional_networks %}
