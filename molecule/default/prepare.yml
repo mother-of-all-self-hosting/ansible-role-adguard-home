@@ -25,9 +25,6 @@
     - name: Ensure Docker is installed for AdGuard Home Molecule tests preparation
       ansible.builtin.include_role:
         name: ansible-role-docker
-      vars:
-        docker_daemon_options:
-          storage-driver: vfs
 
     # This role deliberately does not template AdGuard Home's own configuration
     # file - AdGuard Home owns and rewrites it, and users go through its
