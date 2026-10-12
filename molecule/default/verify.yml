@@ -25,6 +25,10 @@
             file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
             name: adguard_home_defaults
 
+        # ------------------------------------------------------------------
+        # The systemd unit
+        # ------------------------------------------------------------------
+
         - name: Wait for the AdGuard Home systemd services to become active (up to 180s each)
           ansible.builtin.systemd_service:
             name: "{{ item }}"
@@ -54,6 +58,10 @@
             cmd: "journalctl --no-pager --output=cat --unit={{ item }}"
           changed_when: false
           loop: "{{ adguard_home_verify_units }}"
+
+        # ------------------------------------------------------------------
+        #
+        # ------------------------------------------------------------------
 
         # An AdGuard Home that has not been through its first-run wizard redirects
         # every web path to `/install.html`, this endpoint included. A 200 here is
