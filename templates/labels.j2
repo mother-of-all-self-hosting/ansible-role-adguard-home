@@ -19,7 +19,7 @@ traefik.http.middlewares.{{ adguard_home_identifier }}-basic-auth.basicauth.user
 {% endif %}
 
 {% if adguard_home_container_labels_traefik_path_prefix != '/' %}
-traefik.http.middlewares.{{ adguard_home_identifier }}-slashless-redirect.redirectregex.regex=^({{ adguard_home_container_labels_traefik_path_prefix | quote }})$
+traefik.http.middlewares.{{ adguard_home_identifier }}-slashless-redirect.redirectregex.regex=^(https?://[^/]+{{ adguard_home_container_labels_traefik_path_prefix | regex_escape }})$
 traefik.http.middlewares.{{ adguard_home_identifier }}-slashless-redirect.redirectregex.replacement=${1}/
 {% set middlewares = middlewares + [adguard_home_identifier + '-slashless-redirect'] %}
 {% endif %}
