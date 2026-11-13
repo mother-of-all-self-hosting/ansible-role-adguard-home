@@ -11,7 +11,7 @@ SPDX-FileCopyrightText: 2022 Warren Bailey
 SPDX-FileCopyrightText: 2023 Antonis Christofides
 SPDX-FileCopyrightText: 2023 Felix Stupp
 SPDX-FileCopyrightText: 2023 Julian-Samuel Gebühr
-SPDX-FileCopyrightText: 2023 Pierre 'McFly' Marty
+SPDX-FileCopyrightText: 2023, 2026 Pierre 'McFly' Marty
 SPDX-FileCopyrightText: 2024 - 2025 Suguru Hirahara
 SPDX-FileCopyrightText: 2024 MASH project contributors
 SPDX-FileCopyrightText: 2024 Sergio Durigan Junior
@@ -48,6 +48,8 @@ By default, those ports will be exposed by the container on **all network interf
 adguard_home_container_dns_tcp_bind_port: '192.168.1.15:53'
 adguard_home_container_dns_udp_bind_port: '192.168.1.15:53'
 ```
+
+On hosts where the `systemd-resolved` stub listener is active, exposing the ports on all interfaces fails; see [Running alongside systemd-resolved](#running-alongside-systemd-resolved) for the required configuration.
 
 ## Adjusting the playbook configuration
 
@@ -101,6 +103,49 @@ In this mode, the role skips Docker network creation and deletion, DNS port publ
 The web interface also listens directly on the host (port `3000` during initial setup). If using Traefik, keep the web interface on port `3000` and ensure Traefik can reach the host, as described in its [host networking documentation](https://doc.traefik.io/traefik/reference/install-configuration/providers/docker/#host-networking). When accessing AdGuard Home directly without Traefik, set `adguard_home_container_labels_traefik_enabled: false` and use `http://<server-ip>:3000` for initial setup.
 
 Host networking does not enable or configure DHCP by itself. Configure it in AdGuard Home after installation; see the upstream [DHCP documentation](https://adguard-dns.io/kb/adguard-home/dhcp/). DHCP also needs raw socket permissions, which this role's default container capabilities do not grant. Additional capabilities can be supplied via `adguard_home_container_extra_arguments_custom`; non-root containers may also encounter the upstream [DHCP permissions issue](https://github.com/AdguardTeam/AdGuardHome/issues/8319).
+
+### Running alongside systemd-resolved
+
+This section applies to the default bridge networking. If you use [host networking](#using-host-networking), follow the instructions in that section instead.
+
+On hosts where `systemd-resolved` is active, its stub listener occupies port `53` on `127.0.0.53` (and, on some systems, `127.0.0.54`). Publishing AdGuard Home's DNS ports on the default `0.0.0.0:53` overlaps those addresses, and the container fails to start with:
+
+> Error response from daemon: failed to set up container networking: driver failed programming external connectivity on endpoint ...: failed to bind host port 0.0.0.0:53/tcp: address already in use
+
+On such hosts, instead of disabling the stub listener, publish AdGuard Home on specific addresses rather than `0.0.0.0`, and optionally route the host's own lookups through it.
+
+Add the following configuration to your `vars.yml` file:
+
+```yaml
+# Publish DNS on a specific address (e.g. the public IP) instead of 0.0.0.0
+adguard_home_container_dns_tcp_bind_port: "1.2.3.4:53"
+# The UDP bind port inherits the TCP bind port by default
+
+# Also publish on loopback so the host itself can use AdGuard Home
+# (systemd-resolved forwards here)
+adguard_home_container_extra_arguments_custom:
+  - "-p 127.0.0.1:53:53/tcp"
+  - "-p 127.0.0.1:53:53/udp"
+```
+
+To make the host resolve through AdGuard Home, configure `systemd-resolved`'s upstream resolver to use a published address (e.g. `127.0.0.1`); do not point `/etc/resolv.conf` at it directly. The exact procedure depends on the host's network configuration. For example, with `netplan` and an interface using DHCP, add the following to the interface and run `sudo netplan try`:
+
+```yaml
+      dhcp4-overrides:
+        use-dns: false
+      nameservers:
+        addresses: [127.0.0.1]
+```
+
+Disabling the interface's DHCP-provided DNS servers (via `dhcp4-overrides`) is required: `systemd-resolved` queries the global, per-link and link-provided DNS servers in parallel, so leaving them in place would only route some lookups through AdGuard Home.
+
+> [!NOTE]
+> On the host, the `systemd-resolved` stub listener stays enabled, so `/etc/resolv.conf` continues to point at `127.0.0.53`. Other split-DNS routes configured on the host are preserved as well.
+
+Configure AdGuard Home's upstream DNS servers (via the set up wizard or the web interface) to external resolvers, such as `9.9.9.9`. Do **not** use an address that resolves back to AdGuard Home itself (e.g. `127.0.0.1` or `127.0.0.53`), as that would create a loop.
+
+> [!WARNING]
+> When the host resolves through AdGuard Home, DNS resolution is unavailable while the AdGuard Home container is down. The role already configures `Restart=always`.
 
 ### Extending the configuration
 
